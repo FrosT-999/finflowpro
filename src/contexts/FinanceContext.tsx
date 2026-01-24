@@ -1,12 +1,12 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-import { useTransactions } from '@/hooks/useTransactions';
+import { useSupabaseTransactions } from '@/hooks/useSupabaseTransactions';
 
-type FinanceContextType = ReturnType<typeof useTransactions>;
+type FinanceContextType = ReturnType<typeof useSupabaseTransactions>;
 
 const FinanceContext = createContext<FinanceContextType | null>(null);
 
 export function FinanceProvider({ children }: { children: ReactNode }) {
-  const finance = useTransactions();
+  const finance = useSupabaseTransactions();
 
   return (
     <FinanceContext.Provider value={finance}>

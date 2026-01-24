@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { Plus, ArrowUpCircle, ArrowDownCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -53,6 +53,15 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+// Get current date in local timezone
+function getCurrentDate(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 interface TransactionFormProps {
   transaction?: Transaction;
   onSuccess?: () => void;
@@ -61,6 +70,7 @@ interface TransactionFormProps {
 
 export function TransactionForm({ transaction, onSuccess, trigger }: TransactionFormProps) {
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { addTransaction, updateTransaction } = useFinance();
   const { toast } = useToast();
   const isEditing = !!transaction;
@@ -71,7 +81,7 @@ export function TransactionForm({ transaction, onSuccess, trigger }: Transaction
       type: transaction?.type || 'expense',
       category: transaction?.category || '',
       amount: transaction?.amount?.toString() || '',
-      date: transaction?.date || new Date().toISOString().split('T')[0],
+      date: transaction?.date || getCurrentDate(),
       description: transaction?.description || '',
     },
   });
@@ -79,32 +89,49 @@ export function TransactionForm({ transaction, onSuccess, trigger }: Transaction
   const selectedType = form.watch('type');
   const categories = selectedType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
-  const onSubmit = (data: FormData) => {
-    const transactionData = {
-      type: data.type as TransactionType,
-      category: data.category as Category,
-      amount: parseFloat(data.amount),
-      date: data.date,
-      description: data.description?.trim() || undefined,
-    };
+  const onSubmit = async (data: FormData) => {
+    setIsLoading(true);
+    try {
+      const transactionData = {
+        type: data.type as TransactionType,
+        category: data.category as Category,
+        amount: parseFloat(data.amount),
+        date: data.date,
+        description: data.description?.trim() || undefined,
+      };
 
-    if (isEditing && transaction) {
-      updateTransaction(transaction.id, transactionData);
-      toast({
-        title: 'Transação atualizada',
-        description: 'A transação foi atualizada com sucesso.',
+      if (isEditing && transaction) {
+        await updateTransaction(transaction.id, transactionData);
+        toast({
+          title: 'Transação atualizada',
+          description: 'A transação foi atualizada com sucesso.',
+        });
+      } else {
+        await addTransaction(transactionData);
+        toast({
+          title: 'Transação adicionada',
+          description: 'A transação foi registrada com sucesso.',
+        });
+      }
+
+      setOpen(false);
+      form.reset({
+        type: 'expense',
+        category: '',
+        amount: '',
+        date: getCurrentDate(),
+        description: '',
       });
-    } else {
-      addTransaction(transactionData);
+      onSuccess?.();
+    } catch (error: any) {
       toast({
-        title: 'Transação adicionada',
-        description: 'A transação foi registrada com sucesso.',
+        title: 'Erro',
+        description: error.message || 'Não foi possível salvar a transação.',
+        variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
-
-    setOpen(false);
-    form.reset();
-    onSuccess?.();
   };
 
   return (
@@ -257,11 +284,19 @@ export function TransactionForm({ transaction, onSuccess, trigger }: Transaction
                 variant="outline"
                 className="flex-1"
                 onClick={() => setOpen(false)}
+                disabled={isLoading}
               >
                 Cancelar
               </Button>
-              <Button type="submit" className="flex-1">
-                {isEditing ? 'Salvar' : 'Adicionar'}
+              <Button type="submit" className="flex-1" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  isEditing ? 'Salvar' : 'Adicionar'
+                )}
               </Button>
             </div>
           </form>
