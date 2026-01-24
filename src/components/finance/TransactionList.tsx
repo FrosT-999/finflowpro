@@ -11,13 +11,16 @@ import {
   Briefcase,
   Laptop,
   MoreHorizontal,
+  Loader2,
 } from 'lucide-react';
+import { useState } from 'react';
 import { Transaction, CATEGORY_LABELS, Category } from '@/types/finance';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Button } from '@/components/ui/button';
 import { TransactionForm } from './TransactionForm';
 import { useFinance } from '@/contexts/FinanceContext';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +51,27 @@ interface TransactionListProps {
 
 export function TransactionList({ transactions, showActions = true }: TransactionListProps) {
   const { deleteTransaction } = useFinance();
+  const { toast } = useToast();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      await deleteTransaction(id);
+      toast({
+        title: 'Transação excluída',
+        description: 'A transação foi removida com sucesso.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erro',
+        description: error.message || 'Não foi possível excluir a transação.',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (transactions.length === 0) {
     return (
@@ -68,11 +92,15 @@ export function TransactionList({ transactions, showActions = true }: Transactio
       {transactions.map((transaction, index) => {
         const CategoryIcon = categoryIcons[transaction.category];
         const isIncome = transaction.type === 'income';
+        const isDeleting = deletingId === transaction.id;
 
         return (
           <div
             key={transaction.id}
-            className="transaction-item animate-fade-in"
+            className={cn(
+              "transaction-item animate-fade-in",
+              isDeleting && "opacity-50"
+            )}
             style={{ animationDelay: `${index * 50}ms` }}
           >
             <div className="flex items-center gap-4">
@@ -112,15 +140,24 @@ export function TransactionList({ transactions, showActions = true }: Transactio
                   <TransactionForm
                     transaction={transaction}
                     trigger={
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isDeleting}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                     }
                   />
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -133,7 +170,7 @@ export function TransactionList({ transactions, showActions = true }: Transactio
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => deleteTransaction(transaction.id)}
+                          onClick={() => handleDelete(transaction.id)}
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           Excluir

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Target, CheckCircle2 } from 'lucide-react';
+import { Target, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 export function GoalProgress() {
   const [open, setOpen] = useState(false);
   const [goalAmount, setGoalAmount] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { getGoalForMonth, setMonthlyGoal, getMonthlyStats } = useFinance();
   const { toast } = useToast();
 
@@ -29,7 +30,7 @@ export function GoalProgress() {
   const progressClass = progress >= 100 ? 'progress-fill-success' : 
                         progress >= 50 ? 'progress-fill-warning' : 'progress-fill-danger';
 
-  const handleSetGoal = () => {
+  const handleSetGoal = async () => {
     const amount = parseFloat(goalAmount);
     if (isNaN(amount) || amount <= 0) {
       toast({
@@ -40,13 +41,24 @@ export function GoalProgress() {
       return;
     }
 
-    setMonthlyGoal(currentMonth, amount);
-    toast({
-      title: 'Meta definida!',
-      description: `Sua meta de economia para ${formatMonth(currentMonth)} é ${formatCurrency(amount)}`,
-    });
-    setOpen(false);
-    setGoalAmount('');
+    setIsLoading(true);
+    try {
+      await setMonthlyGoal(currentMonth, amount);
+      toast({
+        title: 'Meta definida!',
+        description: `Sua meta de economia para ${formatMonth(currentMonth)} é ${formatCurrency(amount)}`,
+      });
+      setOpen(false);
+      setGoalAmount('');
+    } catch (error: any) {
+      toast({
+        title: 'Erro',
+        description: error.message || 'Não foi possível definir a meta.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -93,11 +105,23 @@ export function GoalProgress() {
                   variant="outline"
                   className="flex-1"
                   onClick={() => setOpen(false)}
+                  disabled={isLoading}
                 >
                   Cancelar
                 </Button>
-                <Button className="flex-1" onClick={handleSetGoal}>
-                  Salvar
+                <Button 
+                  className="flex-1" 
+                  onClick={handleSetGoal}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    'Salvar'
+                  )}
                 </Button>
               </div>
             </div>

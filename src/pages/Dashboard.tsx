@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Wallet, 
   ArrowUpCircle, 
@@ -8,8 +9,11 @@ import {
   History,
   PieChart,
   Menu,
+  LogOut,
+  User,
 } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { StatCard } from '@/components/finance/StatCard';
 import { TransactionForm } from '@/components/finance/TransactionForm';
 import { TransactionList } from '@/components/finance/TransactionList';
@@ -34,6 +38,15 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
   getCurrentMonth, 
   formatMonth, 
@@ -41,8 +54,12 @@ import {
 } from '@/lib/formatters';
 import { CATEGORY_LABELS, TransactionType, Category } from '@/types/finance';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { profile, signOut } = useAuthContext();
   const { 
     transactions, 
     isLoaded, 
@@ -83,6 +100,28 @@ export default function Dashboard() {
   const expenseTrend = previousMonth && previousMonth.totalExpense > 0
     ? ((monthlyStats.totalExpense - previousMonth.totalExpense) / previousMonth.totalExpense) * 100
     : 0;
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: 'Até logo!',
+        description: 'Você saiu da sua conta.',
+      });
+      navigate('/auth');
+    } catch (error: any) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível sair.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
 
   if (!isLoaded) {
     return (
@@ -141,6 +180,37 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <TransactionForm />
             <ThemeToggle />
+            
+            {/* User Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {getInitials(profile?.display_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium">{profile?.display_name || 'Usuário'}</p>
+                    <p className="text-xs text-muted-foreground">Minha conta</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="gap-2">
+                  <User className="h-4 w-4" />
+                  Perfil
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="gap-2 text-destructive" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
