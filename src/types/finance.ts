@@ -1,5 +1,6 @@
 export type TransactionType = 'income' | 'expense';
 
+// Legacy category type - kept for backward compatibility
 export type Category = 
   | 'alimentacao'
   | 'aluguel'
@@ -8,12 +9,13 @@ export type Category =
   | 'investimentos'
   | 'salario'
   | 'freelance'
-  | 'outros';
+  | 'outros'
+  | string; // Allow any string for custom categories
 
 export interface Transaction {
   id: string;
   type: TransactionType;
-  category: Category;
+  category: string; // Changed from Category to string for custom categories
   amount: number;
   date: string;
   description?: string;
@@ -34,7 +36,7 @@ export interface MonthlyStats {
   savingsRate: number;
 }
 
-export const CATEGORY_LABELS: Record<Category, string> = {
+export const CATEGORY_LABELS: Record<string, string> = {
   alimentacao: 'Alimentação',
   aluguel: 'Aluguel',
   transporte: 'Transporte',
@@ -45,7 +47,7 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   outros: 'Outros',
 };
 
-export const CATEGORY_ICONS: Record<Category, string> = {
+export const CATEGORY_ICONS: Record<string, string> = {
   alimentacao: 'UtensilsCrossed',
   aluguel: 'Home',
   transporte: 'Car',
@@ -56,5 +58,5 @@ export const CATEGORY_ICONS: Record<Category, string> = {
   outros: 'MoreHorizontal',
 };
 
-export const INCOME_CATEGORIES: Category[] = ['salario', 'freelance', 'investimentos', 'outros'];
-export const EXPENSE_CATEGORIES: Category[] = ['alimentacao', 'aluguel', 'transporte', 'lazer', 'investimentos', 'outros'];
+export const INCOME_CATEGORIES: string[] = ['salario', 'freelance', 'investimentos', 'outros'];
+export const EXPENSE_CATEGORIES: string[] = ['alimentacao', 'aluguel', 'transporte', 'lazer', 'investimentos', 'outros'];

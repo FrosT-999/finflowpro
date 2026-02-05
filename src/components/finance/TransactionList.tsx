@@ -3,22 +3,16 @@ import {
   ArrowDownCircle, 
   Pencil, 
   Trash2,
-  UtensilsCrossed,
-  Home,
-  Car,
-  Gamepad2,
-  TrendingUp,
-  Briefcase,
-  Laptop,
   MoreHorizontal,
   Loader2,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Transaction, CATEGORY_LABELS, Category } from '@/types/finance';
+import { Transaction } from '@/types/finance';
 import { formatCurrency, formatDate } from '@/lib/formatters';
 import { Button } from '@/components/ui/button';
 import { TransactionForm } from './TransactionForm';
 import { useFinance } from '@/contexts/FinanceContext';
+import { useCategoryContext } from '@/contexts/CategoryContext';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -33,17 +27,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const categoryIcons: Record<Category, React.ElementType> = {
-  alimentacao: UtensilsCrossed,
-  aluguel: Home,
-  transporte: Car,
-  lazer: Gamepad2,
-  investimentos: TrendingUp,
-  salario: Briefcase,
-  freelance: Laptop,
-  outros: MoreHorizontal,
-};
-
 interface TransactionListProps {
   transactions: Transaction[];
   showActions?: boolean;
@@ -51,8 +34,17 @@ interface TransactionListProps {
 
 export function TransactionList({ transactions, showActions = true }: TransactionListProps) {
   const { deleteTransaction } = useFinance();
+  const { categories } = useCategoryContext();
   const { toast } = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const getCategoryInfo = (categoryName: string) => {
+    const category = categories.find(c => c.name === categoryName);
+    return {
+      name: category?.name || categoryName,
+      color: category?.color || '#6b7280',
+    };
+  };
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -77,7 +69,7 @@ export function TransactionList({ transactions, showActions = true }: Transactio
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <div className="rounded-full bg-muted p-4 mb-4">
-          <TrendingUp className="h-8 w-8 text-muted-foreground" />
+          <MoreHorizontal className="h-8 w-8 text-muted-foreground" />
         </div>
         <h3 className="font-semibold text-lg">Nenhuma transação</h3>
         <p className="text-muted-foreground mt-1">
@@ -90,9 +82,9 @@ export function TransactionList({ transactions, showActions = true }: Transactio
   return (
     <div className="space-y-2">
       {transactions.map((transaction, index) => {
-        const CategoryIcon = categoryIcons[transaction.category];
         const isIncome = transaction.type === 'income';
         const isDeleting = deletingId === transaction.id;
+        const categoryInfo = getCategoryInfo(transaction.category);
 
         return (
           <div
@@ -104,17 +96,20 @@ export function TransactionList({ transactions, showActions = true }: Transactio
             style={{ animationDelay: `${index * 50}ms` }}
           >
             <div className="flex items-center gap-4">
-              <div className={cn(
-                'rounded-xl p-3',
-                isIncome ? 'bg-income/10' : 'bg-expense/10'
-              )}>
-                <CategoryIcon className={cn(
-                  'h-5 w-5',
-                  isIncome ? 'text-income' : 'text-expense'
-                )} />
+              <div 
+                className="rounded-xl p-3 flex items-center justify-center"
+                style={{ 
+                  backgroundColor: `${categoryInfo.color}20`,
+                }}
+              >
+                {isIncome ? (
+                  <ArrowUpCircle className="h-5 w-5" style={{ color: categoryInfo.color }} />
+                ) : (
+                  <ArrowDownCircle className="h-5 w-5" style={{ color: categoryInfo.color }} />
+                )}
               </div>
               <div>
-                <p className="font-medium">{CATEGORY_LABELS[transaction.category]}</p>
+                <p className="font-medium">{categoryInfo.name}</p>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span>{formatDate(transaction.date)}</span>
                   {transaction.description && (
