@@ -1,11 +1,12 @@
 import { TrendingUp, TrendingDown, AlertTriangle, Sparkles } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
+import { useCategoryContext } from '@/contexts/CategoryContext';
 import { getCurrentMonth, formatCurrency } from '@/lib/formatters';
-import { CATEGORY_LABELS } from '@/types/finance';
 import { cn } from '@/lib/utils';
 
 export function FinancialInsights() {
   const { getMonthlyTrend, getCategoryBreakdown } = useFinance();
+  const { categories } = useCategoryContext();
 
   const trend = getMonthlyTrend();
   const currentMonth = getCurrentMonth();
@@ -14,8 +15,14 @@ export function FinancialInsights() {
   // Find the highest expense category
   const highestExpenseCategory = categoryBreakdown.reduce(
     (max, item) => (item.amount > max.amount ? item : max),
-    { category: 'outros' as const, amount: 0 }
+    { category: '', amount: 0 }
   );
+
+  // Get category display name
+  const getCategoryName = (categoryName: string) => {
+    const category = categories.find(c => c.name === categoryName);
+    return category?.name || categoryName;
+  };
 
   // Calculate month-over-month change
   const currentMonthData = trend.find(t => t.month === currentMonth);
@@ -51,7 +58,7 @@ export function FinancialInsights() {
     insights.push({
       type: 'info',
       icon: Sparkles,
-      message: `Sua maior categoria de gastos é ${CATEGORY_LABELS[highestExpenseCategory.category]} (${formatCurrency(highestExpenseCategory.amount)}).`,
+      message: `Sua maior categoria de gastos é ${getCategoryName(highestExpenseCategory.category)} (${formatCurrency(highestExpenseCategory.amount)}).`,
     });
   }
 

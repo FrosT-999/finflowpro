@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Transaction, MonthlyGoal, MonthlyStats, TransactionType, Category } from '@/types/finance';
+import { Transaction, MonthlyGoal, MonthlyStats, TransactionType } from '@/types/finance';
 import { useAuthContext } from '@/contexts/AuthContext';
 
 interface DbTransaction {
@@ -26,7 +26,7 @@ interface DbGoal {
 const mapDbTransaction = (t: DbTransaction): Transaction => ({
   id: t.id,
   type: t.type as TransactionType,
-  category: t.category as Category,
+  category: t.category,
   amount: Number(t.amount),
   date: t.date,
   description: t.description || undefined,
@@ -203,7 +203,7 @@ export function useSupabaseTransactions() {
   const filterTransactions = useCallback((filters: {
     month?: string;
     type?: TransactionType;
-    category?: Category;
+    category?: string;
     search?: string;
   }) => {
     return transactions.filter(t => {
@@ -254,7 +254,7 @@ export function useSupabaseTransactions() {
     });
     
     return Object.entries(breakdown).map(([category, amount]) => ({
-      category: category as Category,
+      category,
       amount,
     }));
   }, [transactions]);

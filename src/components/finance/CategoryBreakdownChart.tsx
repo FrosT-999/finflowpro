@@ -1,12 +1,12 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { CATEGORY_LABELS, Category } from '@/types/finance';
 import { formatCurrency } from '@/lib/formatters';
+import { useCategoryContext } from '@/contexts/CategoryContext';
 
 interface CategoryBreakdownChartProps {
-  data: { category: Category; amount: number }[];
+  data: { category: string; amount: number }[];
 }
 
-const COLORS = [
+const FALLBACK_COLORS = [
   'hsl(221, 83%, 53%)',  // Primary blue
   'hsl(142, 71%, 45%)',  // Green
   'hsl(0, 84%, 60%)',    // Red
@@ -18,6 +18,13 @@ const COLORS = [
 ];
 
 export function CategoryBreakdownChart({ data }: CategoryBreakdownChartProps) {
+  const { categories } = useCategoryContext();
+
+  const getCategoryColor = (categoryName: string, index: number) => {
+    const category = categories.find(c => c.name === categoryName);
+    return category?.color || FALLBACK_COLORS[index % FALLBACK_COLORS.length];
+  };
+
   if (data.length === 0) {
     return (
       <div className="flex items-center justify-center h-[300px] text-muted-foreground">
@@ -27,9 +34,9 @@ export function CategoryBreakdownChart({ data }: CategoryBreakdownChartProps) {
   }
 
   const chartData = data.map((item, index) => ({
-    name: CATEGORY_LABELS[item.category],
+    name: item.category,
     value: item.amount,
-    color: COLORS[index % COLORS.length],
+    color: getCategoryColor(item.category, index),
   }));
 
   const total = data.reduce((sum, item) => sum + item.amount, 0);

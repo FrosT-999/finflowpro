@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -29,20 +29,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useFinance } from '@/contexts/FinanceContext';
-import { 
-  TransactionType, 
-  Category, 
-  CATEGORY_LABELS,
-  INCOME_CATEGORIES,
-  EXPENSE_CATEGORIES,
-  Transaction,
-} from '@/types/finance';
+import { useCategoryContext } from '@/contexts/CategoryContext';
+import { TransactionType, Transaction } from '@/types/finance';
+import { QuickCategoryModal } from './QuickCategoryModal';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   type: z.enum(['income', 'expense']),
-  category: z.string().min(1, 'Selecione uma categoria'),
+  categoryId: z.string().min(1, 'Selecione uma categoria'),
   amount: z.string().min(1, 'Informe o valor').refine(
     (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
     'Valor deve ser maior que zero'
@@ -72,14 +67,28 @@ export function TransactionForm({ transaction, onSuccess, trigger }: Transaction
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { addTransaction, updateTransaction } = useFinance();
+  const { 
+    categories, 
+    incomeCategoriesWithChildren, 
+    expenseCategoriesWithChildren,
+    getCategoryByName,
+    isLoaded: categoriesLoaded,
+  } = useCategoryContext();
   const { toast } = useToast();
   const isEditing = !!transaction;
+
+  // Find the category ID for existing transaction (by name for backward compatibility)
+  const getInitialCategoryId = () => {
+    if (!transaction) return '';
+    const cat = getCategoryByName(transaction.category, transaction.type);
+    return cat?.id || '';
+  };
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       type: transaction?.type || 'expense',
-      category: transaction?.category || '',
+      categoryId: getInitialCategoryId(),
       amount: transaction?.amount?.toString() || '',
       date: transaction?.date || getCurrentDate(),
       description: transaction?.description || '',
@@ -87,14 +96,43 @@ export function TransactionForm({ transaction, onSuccess, trigger }: Transaction
   });
 
   const selectedType = form.watch('type');
-  const categories = selectedType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const currentCategories = selectedType === 'income' 
+    ? incomeCategoriesWithChildren 
+    : expenseCategoriesWithChildren;
+
+  // Reset category when type changes
+  useEffect(() => {
+    if (!isEditing) {
+      form.setValue('categoryId', '');
+    }
+  }, [selectedType, isEditing, form]);
+
+  // Update categoryId when categories are loaded (for editing)
+  useEffect(() => {
+    if (categoriesLoaded && transaction && !form.getValues('categoryId')) {
+      const cat = getCategoryByName(transaction.category, transaction.type);
+      if (cat) {
+        form.setValue('categoryId', cat.id);
+      }
+    }
+  }, [categoriesLoaded, transaction, getCategoryByName, form]);
+
+  const handleCategoryCreated = (categoryId: string) => {
+    form.setValue('categoryId', categoryId);
+  };
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     try {
+      // Find the category name from ID
+      const category = categories.find(c => c.id === data.categoryId);
+      if (!category) {
+        throw new Error('Categoria não encontrada');
+      }
+
       const transactionData = {
         type: data.type as TransactionType,
-        category: data.category as Category,
+        category: category.name,
         amount: parseFloat(data.amount),
         date: data.date,
         description: data.description?.trim() || undefined,
@@ -117,7 +155,7 @@ export function TransactionForm({ transaction, onSuccess, trigger }: Transaction
       setOpen(false);
       form.reset({
         type: 'expense',
-        category: '',
+        categoryId: '',
         amount: '',
         date: getCurrentDate(),
         description: '',
@@ -170,7 +208,6 @@ export function TransactionForm({ transaction, onSuccess, trigger }: Transaction
                         )}
                         onClick={() => {
                           field.onChange('income');
-                          form.setValue('category', '');
                         }}
                       >
                         <ArrowUpCircle className="h-4 w-4" />
@@ -185,7 +222,6 @@ export function TransactionForm({ transaction, onSuccess, trigger }: Transaction
                         )}
                         onClick={() => {
                           field.onChange('expense');
-                          form.setValue('category', '');
                         }}
                       >
                         <ArrowDownCircle className="h-4 w-4" />
@@ -200,10 +236,16 @@ export function TransactionForm({ transaction, onSuccess, trigger }: Transaction
             {/* Category */}
             <FormField
               control={form.control}
-              name="category"
+              name="categoryId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Categoria</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Categoria</FormLabel>
+                    <QuickCategoryModal 
+                      type={selectedType} 
+                      onCategoryCreated={handleCategoryCreated}
+                    />
+                  </div>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -211,10 +253,29 @@ export function TransactionForm({ transaction, onSuccess, trigger }: Transaction
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {CATEGORY_LABELS[cat]}
-                        </SelectItem>
+                      {currentCategories.map((cat) => (
+                        <div key={cat.id}>
+                          <SelectItem value={cat.id}>
+                            <div className="flex items-center gap-2">
+                              <span 
+                                className="w-2 h-2 rounded-full" 
+                                style={{ backgroundColor: cat.color }} 
+                              />
+                              {cat.name}
+                            </div>
+                          </SelectItem>
+                          {cat.children.map((child) => (
+                            <SelectItem key={child.id} value={child.id}>
+                              <div className="flex items-center gap-2 pl-4">
+                                <span 
+                                  className="w-2 h-2 rounded-full" 
+                                  style={{ backgroundColor: child.color }} 
+                                />
+                                {child.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </div>
                       ))}
                     </SelectContent>
                   </Select>

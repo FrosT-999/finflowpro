@@ -11,8 +11,10 @@ import {
   Menu,
   LogOut,
   User,
+  Tags,
 } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
+import { useCategoryContext } from '@/contexts/CategoryContext';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { StatCard } from '@/components/finance/StatCard';
 import { TransactionForm } from '@/components/finance/TransactionForm';
@@ -52,7 +54,7 @@ import {
   formatMonth, 
   getMonthOptions 
 } from '@/lib/formatters';
-import { CATEGORY_LABELS, TransactionType, Category } from '@/types/finance';
+import { TransactionType } from '@/types/finance';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 
@@ -60,6 +62,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { profile, signOut } = useAuthContext();
+  const { categories } = useCategoryContext();
   const { 
     transactions, 
     isLoaded, 
@@ -73,7 +76,7 @@ export default function Dashboard() {
   // Filters state
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
   const [selectedType, setSelectedType] = useState<TransactionType | 'all'>('all');
-  const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   const monthlyStats = getMonthlyStats(selectedMonth);
@@ -136,6 +139,10 @@ export default function Dashboard() {
       <Button variant="ghost" className="w-full justify-start gap-3">
         <LayoutDashboard className="h-5 w-5" />
         Dashboard
+      </Button>
+      <Button variant="ghost" className="w-full justify-start gap-3" onClick={() => navigate('/categories')}>
+        <Tags className="h-5 w-5" />
+        Categorias
       </Button>
       <Button variant="ghost" className="w-full justify-start gap-3">
         <History className="h-5 w-5" />
@@ -343,16 +350,19 @@ export default function Dashboard() {
                   <label className="text-sm font-medium mb-2 block">Categoria</label>
                   <Select 
                     value={selectedCategory} 
-                    onValueChange={(v) => setSelectedCategory(v as Category | 'all')}
+                    onValueChange={(v) => setSelectedCategory(v)}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas</SelectItem>
-                      {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
+                      {categories.filter(c => !c.parentId).map((cat) => (
+                        <SelectItem key={cat.id} value={cat.name}>
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                            {cat.name}
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
