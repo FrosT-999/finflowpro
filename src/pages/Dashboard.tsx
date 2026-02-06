@@ -12,6 +12,7 @@ import {
   LogOut,
   User,
   Tags,
+  GitCompareArrows,
 } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useCategoryContext } from '@/contexts/CategoryContext';
@@ -25,6 +26,7 @@ import { BalanceTrendChart } from '@/components/finance/BalanceTrendChart';
 import { GoalProgress } from '@/components/finance/GoalProgress';
 import { FinancialInsights } from '@/components/finance/FinancialInsights';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { CategoryComparison } from '@/components/finance/CategoryComparison';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -399,6 +401,15 @@ export default function Dashboard() {
 
           {/* Reports Tab */}
           <TabsContent value="reports" className="space-y-6">
+            {/* Category Comparison */}
+            <div className="finance-card">
+              <div className="flex items-center gap-2 mb-4">
+                <GitCompareArrows className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold">Comparativo por Categoria</h3>
+              </div>
+              <CategoryComparison />
+            </div>
+
             {/* Balance Trend */}
             <div className="finance-card">
               <h3 className="font-semibold mb-4">Evolução do Saldo (Últimos 6 meses)</h3>
