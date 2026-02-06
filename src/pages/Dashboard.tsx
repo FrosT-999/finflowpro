@@ -57,6 +57,7 @@ import {
 import { TransactionType } from '@/types/finance';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
+import { CSVImportExport } from '@/components/finance/CSVImportExport';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -385,9 +386,12 @@ export default function Dashboard() {
                 <h3 className="font-semibold">
                   Transações - {formatMonth(selectedMonth)}
                 </h3>
-                <span className="text-sm text-muted-foreground">
-                  {filteredTransactions.length} transações
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">
+                    {filteredTransactions.length} transações
+                  </span>
+                  <CSVImportExport />
+                </div>
               </div>
               <TransactionList transactions={filteredTransactions} />
             </div>
