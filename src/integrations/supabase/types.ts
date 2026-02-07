@@ -58,6 +58,45 @@ export type Database = {
           },
         ]
       }
+      financial_goals: {
+        Row: {
+          created_at: string
+          current_amount: number
+          deadline: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          target_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_amount?: number
+          deadline: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          target_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_amount?: number
+          deadline?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          target_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       monthly_goals: {
         Row: {
           created_at: string

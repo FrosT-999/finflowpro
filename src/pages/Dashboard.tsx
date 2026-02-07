@@ -12,6 +12,7 @@ import {
   LogOut,
   User,
   Tags,
+  Target,
   GitCompareArrows,
 } from 'lucide-react';
 import { useFinance } from '@/contexts/FinanceContext';
@@ -146,6 +147,10 @@ export default function Dashboard() {
       <Button variant="ghost" className="w-full justify-start gap-3" onClick={() => navigate('/categories')}>
         <Tags className="h-5 w-5" />
         Categorias
+      </Button>
+      <Button variant="ghost" className="w-full justify-start gap-3" onClick={() => navigate('/goals')}>
+        <Target className="h-5 w-5" />
+        Metas
       </Button>
       <Button variant="ghost" className="w-full justify-start gap-3">
         <History className="h-5 w-5" />
