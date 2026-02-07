@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Target, CheckCircle2, Loader2 } from 'lucide-react';
+import { Target, CheckCircle2, Loader2, Plus, ChevronRight, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,15 +11,18 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useFinance } from '@/contexts/FinanceContext';
+import { useFinancialGoals } from '@/hooks/useFinancialGoals';
 import { formatCurrency, getCurrentMonth, formatMonth } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 export function GoalProgress() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [goalAmount, setGoalAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { getGoalForMonth, setMonthlyGoal, getMonthlyStats } = useFinance();
+  const { goals } = useFinancialGoals();
   const { toast } = useToast();
 
   const currentMonth = getCurrentMonth();
@@ -29,6 +33,8 @@ export function GoalProgress() {
   const progress = goal ? Math.min((savings / goal.targetAmount) * 100, 100) : 0;
   const progressClass = progress >= 100 ? 'progress-fill-success' : 
                         progress >= 50 ? 'progress-fill-warning' : 'progress-fill-danger';
+
+  const activeGoals = goals.filter(g => g.status === 'active').slice(0, 3);
 
   const handleSetGoal = async () => {
     const amount = parseFloat(goalAmount);
@@ -63,6 +69,7 @@ export function GoalProgress() {
 
   return (
     <div className="finance-card animate-slide-up" style={{ animationDelay: '400ms' }}>
+      {/* Monthly Goal */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="rounded-xl bg-warning/10 p-3">
@@ -160,6 +167,56 @@ export function GoalProgress() {
           <p>Defina uma meta para acompanhar seu progresso</p>
         </div>
       )}
+
+      {/* Financial Goals Summary */}
+      {activeGoals.length > 0 && (
+        <div className="mt-5 pt-5 border-t space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-muted-foreground">Metas Financeiras</h4>
+          </div>
+          {activeGoals.map((g) => {
+            const pct = g.targetAmount > 0 ? Math.min((g.currentAmount / g.targetAmount) * 100, 100) : 0;
+            const pctClass = pct >= 100 ? 'progress-fill-success' : pct >= 50 ? 'progress-fill-warning' : 'progress-fill-danger';
+            const deadlineDate = new Date(g.deadline + 'T00:00:00');
+            const daysLeft = Math.max(Math.ceil((deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)), 0);
+
+            return (
+              <div key={g.id} className="space-y-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium truncate">{g.name}</span>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1 shrink-0">
+                    <Clock className="h-3 w-3" />
+                    {daysLeft}d
+                  </span>
+                </div>
+                <div className="progress-bar !h-1.5">
+                  <div className={cn(pctClass)} style={{ width: `${pct}%` }} />
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{formatCurrency(g.currentAmount)}</span>
+                  <span>{formatCurrency(g.targetAmount)}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Link to Goals page */}
+      <div className="mt-4 pt-3 border-t">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-between text-muted-foreground hover:text-foreground"
+          onClick={() => navigate('/goals')}
+        >
+          <span className="flex items-center gap-2">
+            <Plus className="h-3.5 w-3.5" />
+            {goals.length > 0 ? 'Ver todas as metas' : 'Criar metas financeiras'}
+          </span>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }
