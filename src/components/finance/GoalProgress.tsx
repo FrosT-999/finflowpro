@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useFinancialGoals } from '@/hooks/useFinancialGoals';
@@ -83,11 +82,6 @@ export function GoalProgress() {
           </div>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              {goal ? 'Editar' : 'Definir Meta'}
-            </Button>
-          </DialogTrigger>
           <DialogContent className="sm:max-w-[350px]">
             <DialogHeader>
               <DialogTitle>Definir Meta de Economia</DialogTitle>
