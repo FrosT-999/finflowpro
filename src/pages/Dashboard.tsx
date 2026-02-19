@@ -267,10 +267,14 @@ export default function Dashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
             <TabsTrigger value="overview" className="gap-2">
               <LayoutDashboard className="h-4 w-4 hidden sm:inline" />
               Visão Geral
+            </TabsTrigger>
+            <TabsTrigger value="score" className="gap-2">
+              <GitCompareArrows className="h-4 w-4 hidden sm:inline" />
+              Score
             </TabsTrigger>
             <TabsTrigger value="transactions" className="gap-2">
               <History className="h-4 w-4 hidden sm:inline" />
@@ -282,10 +286,13 @@ export default function Dashboard() {
             </TabsTrigger>
           </TabsList>
 
+          {/* Score Tab */}
+          <TabsContent value="score" className="space-y-6">
+            <FinancialScoreCard />
+          </TabsContent>
+
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            {/* Financial Score System */}
-            <FinancialScoreCard />
 
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Goal Progress */}
@@ -294,6 +301,7 @@ export default function Dashboard() {
               {/* Financial Insights */}
               <FinancialInsights />
             </div>
+
 
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Category Breakdown */}
