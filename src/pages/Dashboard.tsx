@@ -26,6 +26,7 @@ import { IncomeExpenseChart } from '@/components/finance/IncomeExpenseChart';
 import { BalanceTrendChart } from '@/components/finance/BalanceTrendChart';
 import { GoalProgress } from '@/components/finance/GoalProgress';
 import { FinancialInsights } from '@/components/finance/FinancialInsights';
+import { FinancialScoreCard } from '@/components/finance/FinancialScoreCard';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { CategoryComparison } from '@/components/finance/CategoryComparison';
 import { Button } from '@/components/ui/button';
@@ -283,6 +284,9 @@ export default function Dashboard() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
+            {/* Financial Score System */}
+            <FinancialScoreCard />
+
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Goal Progress */}
               <GoalProgress />
