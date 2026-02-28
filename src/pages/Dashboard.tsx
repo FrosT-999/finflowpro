@@ -61,7 +61,7 @@ import {
 import { TransactionType } from '@/types/finance';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
-import { CSVImportExport } from '@/components/finance/CSVImportExport';
+import { SmartImportDialog } from '@/components/finance/SmartImportDialog';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -409,7 +409,7 @@ export default function Dashboard() {
                   <span className="text-sm text-muted-foreground">
                     {filteredTransactions.length} transações
                   </span>
-                  <CSVImportExport />
+                  <SmartImportDialog />
                 </div>
               </div>
               <TransactionList transactions={filteredTransactions} />
