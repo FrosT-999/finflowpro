@@ -8,6 +8,7 @@ import { FinanceProvider } from "@/contexts/FinanceContext";
 import { CategoryProvider } from "@/contexts/CategoryContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Categories from "./pages/Categories";
 import Goals from "./pages/Goals";
@@ -25,9 +26,10 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route 
-                path="/" 
+                path="/dashboard" 
                 element={
                   <ProtectedRoute>
                     <CategoryProvider>

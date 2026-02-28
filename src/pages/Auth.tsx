@@ -77,7 +77,7 @@ export default function Auth() {
         title: 'Bem-vindo de volta!',
         description: 'Login realizado com sucesso.',
       });
-      navigate('/');
+      navigate('/dashboard');
     } catch (error: any) {
       toast({
         title: 'Erro no login',
@@ -97,7 +97,7 @@ export default function Auth() {
         title: 'Conta criada!',
         description: 'Sua conta foi criada com sucesso. Você já está logado.',
       });
-      navigate('/');
+      navigate('/dashboard');
     } catch (error: any) {
       toast({
         title: 'Erro no cadastro',
